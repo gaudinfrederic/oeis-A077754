@@ -24,6 +24,8 @@ theorem A077754 (n : ℕ) :
 
 - Lean toolchain `v4.35.0`, mathlib `v4.35.0` (pinned manifest)
 - `lake build` — full build, **zero `sorry`**
+- Kernel re-verified: `lake env leanchecker A077754` and
+  `lake env leanchecker CornerTable` both pass (exit 0)
 - Finite certificates discharged by `native_decide` and
   independently re-derived by a stdlib-only Python verifier
   (`A077754-ANNEXE.py` in the archived deposit)
