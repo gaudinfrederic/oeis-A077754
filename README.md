@@ -40,10 +40,12 @@ theorem A077754 (n : ℕ) :
   `residue_reach` (fixed-count fibre coset reachability);
   `stage_cover` (analytic, `M > 184`); `stage_cover_small'` /
   `stage_cover_2` / `corner_witness` (finite branches);
-  `witSmall_all` (176 witnesses, `n ≤ 200`).
+  `witSmall_all` (176 witnesses, `n ≤ 200`); `witCorner_all`
+  (`native_decide` certificate over the `witCorner` table).
 - `CornerTable.lean` — `witCorner` witness table (795 entries,
-  `m ∈ {11,19,23}`, `L ∈ {7,8,9}`) + `witCorner_all`
-  (`native_decide`).
+  `m ∈ {11,19,23}`, `L ∈ {7,8,9}`; data only — its
+  `native_decide` certificate `witCorner_all` lives in
+  `A077754.lean`).
 
 ## Reproduce
 
