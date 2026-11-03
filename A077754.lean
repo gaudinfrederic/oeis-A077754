@@ -341,20 +341,20 @@ def Xgrid : List ℤ :=
 
 /-- |X| = 60 et listes d unites {2,5}-smooth / {2,3,5}-smooth.
     [T-Lean] par calcul natif. -/
-theorem Xgrid_card : Xgrid.length = 60 := by native_decide
+theorem Xgrid_card : Xgrid.length = 60 := by decide
 
 /-- les elements {2,5}-smooth de X : 16 signes. -/
 def Xsmooth25 : List ℤ :=
   [1, 2, 4, 8, 10, 20, 32, 40, -1, -2, -4, -8, -10, -20, -32, -40]
 
-theorem Xsmooth25_sub : ∀ x ∈ Xsmooth25, x ∈ Xgrid := by native_decide
+theorem Xsmooth25_sub : ∀ x ∈ Xsmooth25, x ∈ Xgrid := by decide
 
 /-- les elements {2,3,5}-smooth de X : 28 signes. -/
 def Xsmooth235 : List ℤ :=
   [1, 2, 3, 4, 8, 9, 10, 12, 18, 20, 24, 30, 32, 40,
    -1, -2, -3, -4, -8, -9, -10, -12, -18, -20, -24, -30, -32, -40]
 
-theorem Xsmooth235_sub : ∀ x ∈ Xsmooth235, x ∈ Xgrid := by native_decide
+theorem Xsmooth235_sub : ∀ x ∈ Xsmooth235, x ∈ Xgrid := by decide
 
 /-- Concatenation sans retenue : N = B + 10^d.H avec
     d = nb de chiffres de B (B /= 0) se decompose en
@@ -1327,6 +1327,8 @@ theorem gcd9mem (m : ℕ) :
   rw [hke]
   interval_cases k <;> simp
 
+set_option maxRecDepth 100000 in
+set_option maxHeartbeats 80000000 in
 /-- Couverture machine : pour M <= 184 coprime a 10 (les cas
     realisables : g in {1,3,9} avec 3 non|M quand g < 9), la
     somme de 6 etages couvre tout ZMod M. -/
@@ -1389,6 +1391,7 @@ theorem stage_cover_small (M g : ℕ) [NeZero M] (hM : M ≤ 184)
   · rw [if_neg (by norm_num)]
     exact huniv _ (of_decide_eq_true h9)
 
+set_option maxRecDepth 40000 in
 /-- Pour les trois moduls du coin (11, 19, 23) : 2 etages de
     Xsmooth235 couvrent ZMod m entier (g = 1 dans ces cas). -/
 theorem stage_cover_2 (M g : ℕ) [NeZero M] (xs : List ℤ)
@@ -1400,8 +1403,10 @@ theorem stage_cover_2 (M g : ℕ) [NeZero M] (xs : List ℤ)
   rcases hM with rfl | rfl | rfl <;>
     apply Finset.eq_univ_of_card <;>
     rw [ZMod.card] <;>
-    native_decide
+    decide
 
+set_option maxRecDepth 100000 in
+set_option maxHeartbeats 400000000 in
 /-- Certificat machine : pour tout m <= 1656 premier a 10 hors
     {11,19,23} avec M = m / gcd(9,m) <= 184, il existe
     k <= m/27+1 etages couvrant ZMod M. -/
@@ -1465,6 +1470,8 @@ theorem stage_cover_small' (m : ℕ) (hm : Nat.Coprime m 10)
   have hkl := List.mem_range.mp hkmem
   exact ⟨k, by omega, of_decide_eq_true hk⟩
 
+set_option maxRecDepth 100000 in
+set_option maxHeartbeats 4000000 in
 /-- Certificat de la table witCorner : pour m in {11,19,23},
     L in {7,8,9}, r0 <= 4 et tout residu tv, une entree
     (m, L, tv, code) donne u_e = code/10^e%10 <= 8 de somme
@@ -1482,7 +1489,7 @@ theorem witCorner_all :
                 e.2.2.2 / 10 ^ i % 10).sum == 4 * L + r0) &&
               (fibre (fun i => e.2.2.2 / 10 ^ i % 10) L % m == tv)
             ) = true := by
-  native_decide
+  decide
 
 /-- Extraction d'un temoin de la table pour le coin. -/
 theorem corner_witness (m : ℕ) [NeZero m] (t : ZMod m)
@@ -1613,9 +1620,9 @@ theorem residue_reach (m : ℕ) (hm : Nat.Coprime m 10)
       exact xunit25 M hcopM x hx
   have hnd : xs.Nodup := by
     rcases hg9 with h | h | h
-    · rw [if_pos h] at hxsdef; rw [hxsdef]; native_decide
-    · rw [if_neg (by omega)] at hxsdef; rw [hxsdef]; native_decide
-    · rw [if_neg (by omega)] at hxsdef; rw [hxsdef]; native_decide
+    · rw [if_pos h] at hxsdef; rw [hxsdef]; decide
+    · rw [if_neg (by omega)] at hxsdef; rw [hxsdef]; decide
+    · rw [if_neg (by omega)] at hxsdef; rw [hxsdef]; decide
   have hxb : ∀ x ∈ xs, |x| ≤ 92 := by
     intro x hx
     rcases hg9 with h | h | h
@@ -1637,13 +1644,13 @@ theorem residue_reach (m : ℕ) (hm : Nat.Coprime m 10)
   have hsq : M ≤ (m / 27 + 1) * xs.length + 1 := by
     rcases hg9 with h | h | h
     · have hlen : xs.length = 28 := by
-        rw [if_pos h] at hxsdef; rw [hxsdef]; native_decide
+        rw [if_pos h] at hxsdef; rw [hxsdef]; decide
       rw [hlen, hMdef, h, Nat.div_one]; omega
     · have hlen : xs.length = 16 := by
-        rw [if_neg (by omega)] at hxsdef; rw [hxsdef]; native_decide
+        rw [if_neg (by omega)] at hxsdef; rw [hxsdef]; decide
       rw [hlen, hMdef, h]; omega
     · have hlen : xs.length = 16 := by
-        rw [if_neg (by omega)] at hxsdef; rw [hxsdef]; native_decide
+        rw [if_neg (by omega)] at hxsdef; rw [hxsdef]; decide
       rw [hlen, hMdef, h]; omega
   have hunit : IsUnit ((9 / g : ℕ) : ZMod M) :=
     (ZMod.isUnit_iff_coprime _ _).mpr (scalar_unit m)
@@ -1782,7 +1789,7 @@ theorem residue_reach (m : ℕ) (hm : Nat.Coprime m 10)
     · rcases hbad with rfl | rfl | rfl <;>
         refine htail 2 (by omega) ?_
       all_goals
-        have hg1 : g = 1 := by rw [hgdef]; native_decide
+        have hg1 : g = 1 := by rw [hgdef]; decide
         rw [hg1, Nat.div_one] at hMdef
         have hxs1 : xs = Xsmooth235 := by
           rw [if_pos hg1] at hxsdef; exact hxsdef
@@ -2078,6 +2085,8 @@ def witOk (n N : ℕ) : Bool :=
   decide (n ∣ N) && allNonzero N && decide (sigma10 N = n) &&
     decide (2 ≤ (Nat.digits 10 N).length)
 
+set_option maxRecDepth 100000 in
+set_option maxHeartbeats 4000000 in
 /-- Verification exhaustive de la table : pour tout n <= 200,
     soit witTab contient un temoin verifie, soit n est dans
     {1,2,5,11} u 10N. Calcul natif (machine). -/
@@ -2087,7 +2096,7 @@ theorem witSmall_all :
       | some N => witOk n N
       | none => n == 1 || n == 2 || n == 5 || n == 11 ||
           decide (10 ∣ n)) = true := by
-  native_decide
+  decide
 
 /-- LEMME-MACHINE A (table exhaustive n <= 200 — BFS de
     l'annexe, temoins certifies par witSmall_all). -/
