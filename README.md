@@ -1,6 +1,6 @@
 # A077754 — Murthy's conjecture, formalized in Lean 4
 
-[![CI](https://github.com/USERNAME/a077754-lean/actions/workflows/ci.yml/badge.svg)](https://github.com/USERNAME/a077754-lean/actions/workflows/ci.yml)
+[![CI](https://github.com/gaudinfrederic/oeis-A077754/actions/workflows/ci.yml/badge.svg)](https://github.com/gaudinfrederic/oeis-A077754/actions/workflows/ci.yml)
 
 Machine-checked resolution of the conjecture recorded in the
 comments of [OEIS A077754](https://oeis.org/A077754)
