@@ -1,6 +1,6 @@
 {
   "title": "A077754 — Murthy's conjecture: prescribed digit sums in residue classes (Lean 4)",
-  "description": "Machine-checked proof of theorem A077754: for every n, there exists a multiple N of n with all-nonzero digits, digit sum n and at least 2 digits, iff n is not in {1,2,5,11} and not divisible by 10. Unconditional, proved for all n. Trust base: standard axioms (propext, Classical.choice, Quot.sound) plus disclosed native_decide finite-certificate axioms (corner table, witSmall, residue_reach, stage_cover).",
+  "description": "Machine-checked proof of theorem A077754: for every n, there exists a multiple N of n with all-nonzero digits, digit sum n and at least 2 digits, iff n is not in {1,2,5,11} and not divisible by 10. Unconditional, proved for all n. Trust base: the Lean kernel alone — #print axioms A077754 = [propext, Classical.choice, Quot.sound]; every finite certificate is kernel-checked by decide (bitmap certificates in A077754Cert.lean); no native_decide, no sorryAx.",
   "upload_type": "software",
   "creators": [
     {
@@ -24,10 +24,16 @@
   "version": "1.0.0",
   "related_identifiers": [
     {
-      "identifier": "10.5281/zenodo.23879088",
-      "relation": "isSupplementTo",
-      "resource_type": "publication-article",
-      "scheme": "doi"
+      "identifier": "https://oeis.org/A077754",
+      "relation": "documents",
+      "resource_type": "other",
+      "scheme": "url"
+    },
+    {
+      "identifier": "https://github.com/gaudinfrederic/oeis-A077754",
+      "relation": "isSupplementedBy",
+      "resource_type": "software",
+      "scheme": "url"
     }
   ],
   "custom": {

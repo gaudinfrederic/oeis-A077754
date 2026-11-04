@@ -12,4 +12,7 @@ rev = "v4.35.0"
 name = "A077754"
 
 [[lean_lib]]
+name = "A077754Cert"
+
+[[lean_lib]]
 name = "CornerTable"
