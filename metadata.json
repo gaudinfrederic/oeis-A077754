@@ -27,7 +27,7 @@
   "related_identifiers": [
     {
       "identifier": "https://oeis.org/A077754",
-      "relation": "documents",
+      "relation": "references",
       "resource_type": "other",
       "scheme": "url"
     },
@@ -35,6 +35,18 @@
       "identifier": "https://github.com/gaudinfrederic/oeis-A077754",
       "relation": "isSupplementedBy",
       "resource_type": "software",
+      "scheme": "url"
+    },
+    {
+      "identifier": "https://oeis.org/A002998",
+      "relation": "references",
+      "resource_type": "other",
+      "scheme": "url"
+    },
+    {
+      "identifier": "https://oeis.org/A069035",
+      "relation": "references",
+      "resource_type": "other",
       "scheme": "url"
     }
   ],
