@@ -1,6 +1,6 @@
 name = "a077754"
 version = "0.1.0"
-defaultTargets = ["A077754"]
+defaultTargets = ["A077754", "A077754Val"]
 
 [[require]]
 name = "mathlib"
@@ -13,6 +13,9 @@ name = "A077754"
 
 [[lean_lib]]
 name = "A077754Cert"
+
+[[lean_lib]]
+name = "A077754Val"
 
 [[lean_lib]]
 name = "CornerTable"
