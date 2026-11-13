@@ -19,3 +19,12 @@ name = "A077754Val"
 
 [[lean_lib]]
 name = "CornerTable"
+
+[[lean_lib]]
+name = "Spec_A077754"
+
+[[lean_lib]]
+name = "Check_Spec_A077754"
+
+[[lean_lib]]
+name = "Check_AntiVac_A077754"
