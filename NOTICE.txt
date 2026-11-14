@@ -1,0 +1,36 @@
+NOTICE - Third-party content under a different license
+
+The Zenodo record-level license field is Apache-2.0. That field and
+the Apache-2.0 grant cover ONLY the original material: the Lean
+sources (lean-artifact/*.lean), the paper (A077754-paper.tex / .pdf),
+the working notes
+(A077754-ESSENCE.md, A077754-FINAL.md, A077754-PROOF-assembly.md,
+A077754-REFEREE-NOTES.md, A077754-proof.md, A077754-paper.md,
+BASE-B.md, MURTHY-k1.md), metadata.json, the verification and
+certificate scripts (A077754-ANNEXE.py, BASE_B_sonde.py,
+BASE_B_sonde2.py, VERIFICATIONS/) and this NOTICE.
+
+Files containing verbatim OEIS material (kept solely as audit
+evidence and for reference):
+
+ VERIFICATIONS/b077754.txt     the OEIS b-file of the entry
+                                (n, a(n) data as published)
+
+The same applies to the short OEIS %N quotations and to Murthy's
+conjecture statement quoted inside the paper
+(A077754-paper.tex / .pdf, A077754-paper.md),
+metadata.json, SEAL/SEAL-A077754.md and this record's description:
+they are quotations of OEIS text under the same license, with the
+same attribution.
+
+License basis for redistribution: per clause 2 of The OEIS End-User
+License Agreement, the OEIS is made available under the Creative
+Commons Attribution Share-Alike 4.0 license
+ https://creativecommons.org/licenses/by-sa/4.0/
+(see https://oeis.org/wiki/The_OEIS_End-User_License_Agreement).
+These quotations and snapshots are redistributed under CC-BY-SA-4.0.
+
+Attribution (per clause 3): The On-Line Encyclopedia of Integer
+Sequences, https://oeis.org/A077754 - sequence and conjecture by
+Amarnath Murthy (Nov 20 2002); N. J. A. Sloane, ed.
+No changes were made to the quoted material.

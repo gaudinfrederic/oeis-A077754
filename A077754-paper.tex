@@ -1,0 +1,737 @@
+\documentclass[11pt]{article}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage[margin=1in]{geometry}
+\usepackage{hyperref}
+\usepackage{xurl}
+\emergencystretch=3em
+
+\newtheorem{theorem}{Theorem}
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{corollary}[theorem]{Corollary}
+\theoremstyle{remark}
+\newtheorem{remark}[theorem]{Remark}
+
+\newcommand{\N}{\mathbb{N}}
+\newcommand{\Z}{\mathbb{Z}}
+\newcommand{\sig}{\sigma}
+
+\title{Prescribed digit sums in residue classes\\
+\large and a conjecture of Murthy (OEIS A077754)}
+\author{Fr\'ed\'eric Gaudin\thanks{University of Caen, France.
+Email: \texttt{frederic.gaudin@unicaen.fr}}%
+\thanks{2020 Mathematics Subject Classification: 11A63, 11B83.}%
+\thanks{Keywords: digit sum, multiples, Murthy's conjecture,
+OEIS A077754, formal verification, Lean.}}
+\date{\today}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+Let $m \ge 2$ be coprime to $10$, and put $g = \gcd(9,m)$ and $M = m/g$.
+Fix a decimal length $L \ge 1$ and set $s = \lceil (M-1)/2 \rceil$. We prove that,
+whenever $L \ge 3s$, \emph{every} digit sum $\sig$ in the band
+$[L+3s,\,9L-3s]$ and \emph{every} residue $r \equiv \sig \pmod g$ is realized
+by an $L$-digit positive integer $N$ with all digits nonzero, $\sig(N)=\sig$,
+and $N \equiv r \pmod m$; this band is the feasibility window of the balanced
+exchange method. The same machinery, run with denser smooth
+moves and finite certificates in place of minimal moves, resolves the
+conjecture of Amarnath Murthy recorded as OEIS A077754 (2002): a positive
+integer $n \ge 1$ admits a multiple with at least two digits, all nonzero,
+and digit sum $n$, if and only
+if $n \notin \{1,2,5,11\} \cup \{10k : k \ge 1\}$. Both implications are
+machine-verified in full in Lean~4 with mathlib: all
+finite lemmas are kernel-checked by decide on explicit witness tables
+and bitmap certificates, so the axiom base reduces to the three standard axioms
+(propext, Classical.choice, Quot.sound), and an
+independent self-contained Python program re-derives the main finite checks
+in seconds. The OEIS sequence value
+is formalized in a companion module, certifying that it is
+the least admissible multiple for every non-exceptional $n \ge 1$, vanishes
+on the exceptional set, and agrees with the displayed OEIS values. The proof is
+elementary modulo one classical sumset theorem of Chowla (1935).
+\end{abstract}
+
+\section{Statement of results}
+
+Throughout this paper, $\N = \{0,1,2,\dots\}$ denotes the natural numbers, and
+$10\N = \{10k : k \in \N\}$ denotes the set of multiples of $10$. For a
+positive integer $N \ge 1$, we write $\sig(N)$ for the sum of the decimal
+digits of $N$ (with the convention $\sig(0) = 0$) and
+$\operatorname{len}(N)$ for its number of decimal digits.
+
+Entry A077754 in the On-Line Encyclopedia of Integer Sequences~\cite{oeis},
+contributed by Amarnath Murthy in November 2002 for indices $n \ge 1$, reads
+verbatim:
+\begin{quote}
+``Smallest multiple of n with two or more digits, none of them zeros, whose
+digit sum equals n, or 0 if no such multiple exists. Conjecture: zero occurs
+only for indices which are multiples of 10 apart from 1, 2, 5 and 11.
+(a(n) = 0 only for n = 1,2,5,11 or n = 10k.)''
+\end{quote}
+
+Our first result establishes residue coverage across a wide band of digit sums
+on fixed-length decimal fibres without zero digits. Murthy's conjecture is
+resolved by the same balanced-exchange machinery, using denser smooth moves
+and finite certificates where the minimal-move band does not reach
+$\sig = n$.
+
+\begin{theorem}[equidistribution on the digit fibre]
+\label{thm:band}
+Let $m \ge 2$ be coprime to $10$, and set $g = \gcd(9,m)$, $M = m/g$, and
+$s = \lceil (M-1)/2 \rceil$. For every positive integer $L \ge 3s$, every integer
+$\sig \in [L+3s,\,9L-3s]$, and every residue $r \equiv \sig \pmod g$, there
+exists an $L$-digit positive integer $N$ with all decimal digits nonzero such
+that $\sig(N)=\sig$ and $N \equiv r \pmod m$. The congruence
+$r \equiv \sig \pmod g$ is necessary because $N \equiv \sig(N) \pmod g$, and
+$[L+3s,\,9L-3s]$ is the feasibility window certified by the balanced exchange
+method (\S\ref{sec:edges}).
+\end{theorem}
+
+\begin{theorem}[Murthy's conjecture, OEIS A077754~\cite{oeis}]
+\label{cor:murthy}
+A positive integer $n \ge 1$ admits a multiple $N$ with at least two decimal
+digits, all nonzero, and $\sig(N) = n$, if and only if
+$n \notin \{1,2,5,11\} \cup \{10k : k \ge 1\}$.
+\end{theorem}
+
+Theorem~\ref{cor:murthy} is formally verified in Lean~4 with mathlib
+(v4.35.0)~\cite{lean} without \texttt{sorry} or \texttt{native\_decide},
+relying only on the three standard axioms \texttt{propext},
+\texttt{Classical.choice}, and \texttt{Quot.sound} (see \S\ref{sec:lean} for
+the exact distinction between kernel-formalized theorems and paper-only band
+arguments). Note that on $\N$, the Lean statement includes $n = 0 \in 10\N$,
+which is vacuously excluded because $\operatorname{len}(0) < 2$; restricting
+to $n \ge 1$ gives Theorem~\ref{cor:murthy}.
+
+The necessity of the exceptions is elementary (\S\ref{sec:exc}). For
+sufficiency, the range $1 \le n \le 200$ is settled by an exhaustive witness
+table (certificate A in the appendix). For $n > 200$, we write $n = R\cdot m$
+where $R$ is the $\{2,5\}$-part of $n$ and $\gcd(m,10)=1$. We concatenate a
+short low-order block $B$ divisible by $R$ with a high-order prefix $H$ drawn
+from a fixed-length digit fibre, realizing the target residue
+$-B\cdot 10^{-d} \pmod m$ (where negative exponents denote modular inverses
+modulo $m$) via balanced digit exchanges. We prove Theorem~\ref{cor:murthy}
+first using dense move sets tailored to $n > 200$ (\S\ref{sec:mainproof}), and
+then apply the minimal move set to establish the general band theorem
+(\S\ref{sec:band}).
+
+\begin{corollary}[quantitative length bound]
+\label{cor:quant}
+For every non-exceptional $n > 200$, the constructed witness $N$ satisfies
+$\operatorname{len}(N) \le \lfloor n/5 \rfloor + \lfloor \log_2 n \rfloor$:
+it consists of a high fibre of $L = \lfloor (n-\sig(B))/5 \rfloor$ digits
+(for $m \ge 2$; in the $m = 1$ branch the fibre prefix has
+$\lceil (n-\sig(B))/9 \rceil \le L$ digits)
+concatenated with a low block of $d \le \log_2 n$ (or $d \le \log_5 n$) digits.
+\end{corollary}
+
+The bound in Corollary~\ref{cor:quant} is existential; the \emph{smallest}
+admissible multiple -- the OEIS sequence value $a(n)$ itself -- is formalized
+and certified separately for the displayed anchor values in \S\ref{sec:lean}.
+
+\emph{Related work.} When zero digits are permitted, the existence of a
+multiple of $n$ with digit sum $n$ is classical (see OEIS A002998~\cite{a002998}
+and Aassila~\cite{aassila}). Related results on digit sums of multiples and
+minimal Niven numbers include Fredricksen, Ionascu, Luca, and
+St\u{a}nic\u{a}~\cite{fils}. None of these works enforces the all-nonzero-digit
+constraint, which creates the exact exceptional set
+$\{1,2,5,11\} \cup \{10k : k \ge 1\}$ in Theorem~\ref{cor:murthy}.
+
+\section{Necessity of the exceptions}
+\label{sec:exc}
+
+We verify that no admissible multiple $N$ exists when $n \ge 1$ lies in
+$\{1,2,5,11\} \cup \{10k : k \ge 1\}$.
+
+\begin{itemize}
+\item If $10 \mid n$, then every multiple $N$ of $n$ ends in the decimal digit
+$0$, violating the nonzero-digit requirement.
+\item If $n = 1$, every integer with at least two nonzero digits satisfies
+$\sig(N) \ge 2 > 1$.
+\item If $n = 2$, any multiple $N$ of $2$ with all digits nonzero must end in
+an even nonzero digit (at least $2$). Having at least two nonzero digits then
+forces $\sig(N) \ge 1 + 2 = 3 > 2$.
+\item If $n = 5$, any multiple $N$ of $5$ with all digits nonzero must end in
+$5$. Having at least two nonzero digits forces $\sig(N) \ge 1 + 5 = 6 > 5$.
+\item If $n = 11$, write $S = \sig(N)$ for the digit sum of an admissible
+multiple $N$ and $A$ for the alternating sum of its digits. Suppose $S = 11$
+and $11 \mid N$. Then $11 \mid A$, and $A \equiv S = 11 \pmod 2$, so $A$ is
+odd. Moreover, $|A| \le S = 11$. If $|A| = 11$, then all digits in either the
+even or the odd decimal positions must vanish; since all digits are nonzero,
+$N$ can have at most one digit, contradicting $\operatorname{len}(N) \ge 2$.
+Thus $|A| < 11$, which is impossible because no odd integer strictly between
+$-11$ and $11$ is divisible by $11$. \qed
+\end{itemize}
+
+These cases reflect three distinct obstructions: terminal digit divisibility
+($10k$ and $5$), minimum digit-sum bounds ($1$ and $2$), and alternating digit
+weight ($11$).
+
+\section{Machinery: the fixed-count digit fibre}
+\label{sec:machinery}
+
+Let $n \ge 1$ be a positive integer not divisible by $10$. Write $n = R\cdot m$
+with $\gcd(m,10)=1$ and $R \in \{1, 2^a, 5^b\}$ for integers $a,b \ge 1$; the
+primes $2$ and $5$ cannot both divide $n$ because $10 \nmid n$. When $m \ge 2$,
+set $g = \gcd(9,m) \in \{1,3,9\}$ and $M = m/g$.
+
+Our witness has the form $N = B + 10^d \cdot H$, where $B$ is a $d$-digit
+low-order block divisible by $R$ and $H$ is an $L$-digit high-order prefix
+whose residue modulo $m$ we control by balanced exchanges. Because $B < 10^d$
+has exactly $d$ nonzero digits (when $d \ge 1$), the decimal representation of
+$N$ is the concatenation of $H$ and $B$, so no carries cross the interface and
+$\sig(N) = \sig(H) + \sig(B)$.
+
+\paragraph{The digit fibre.} Fix a length $L \ge 1$ and an offset sum
+$K \in \{0,\dots,8L\}$. Every offset vector $u = (u_0,\dots,u_{L-1})$ with
+$u_e \in \{0,\dots,8\}$ and $\sum_{e=0}^{L-1} u_e = K$ encodes an $L$-digit
+integer
+\[
+ F(u) = \sum_{e=0}^{L-1} (1 + u_e)\,10^e .
+\]
+Because each digit $1 + u_e$ lies in $\{1,\dots,9\}$, no carries occur in base
+$10$, all $L$ digits of $H = F(u)$ are nonzero, $\sig(H) = L + K$, and
+$H \equiv L + K \pmod g$ since $10^e \equiv 1 \pmod 9$ and $g \mid 9$.
+
+\begin{lemma}[the low block]
+\label{lem:lowblock}
+If $R = 1$, set $d = 0$ and $B = 0$. If $R = 2^a$ with $a \ge 1$, there exists
+an $a$-digit integer $B$ with all digits in $\{1,2\}$ such that $2^a \mid B$
+and $\sig(B) \le 2a$. If $R = 5^b$ with $b \ge 1$, there exists a $b$-digit
+integer $B$ with all digits in $\{1,2,3,4,5\}$ such that $5^b \mid B$ and
+$\sig(B) \le 5b$.
+\end{lemma}
+
+\begin{proof}
+For $R = 2^a$, proceed by induction on $a$. For $a = 1$, take $B = 2$. Given a
+$j$-digit multiple $B_j$ of $2^j$ with digits in $\{1,2\}$, we have
+$10^j = 2^j \cdot 5^j \equiv 2^j \pmod{2^{j+1}}$, so one of $B_j + 1\cdot 10^j$
+or $B_j + 2\cdot 10^j$ is divisible by $2^{j+1}$. Similarly, for $R = 5^b$,
+take $B_1 = 5$; given $5^j \mid B_j$, write $10^j = 5^j \cdot 2^j$. Since
+$\gcd(2^j,5)=1$, as $c$ ranges over $\{1,2,3,4,5\}$ the values
+$B_j + c\cdot 10^j$ cover all five multiples of $5^j$ modulo $5^{j+1}$, so one
+is divisible by $5^{j+1}$. The digit-sum bounds follow immediately.
+\end{proof}
+
+\paragraph{Balanced exchanges.} On a block of three consecutive positions
+$\{3i,3i+1,3i+2\}$ inside $\{0,\dots,L-1\}$, consider a triple
+$(d_0,d_1,d_2) \in \{-4,\dots,4\}^3$ such that $d_0 = -d_1 - d_2$ and
+$u_{3i+r} + d_r \in \{0,\dots,8\}$ for $r \in \{0,1,2\}$. Adding $(d_0,d_1,d_2)$
+to $(u_{3i},u_{3i+1},u_{3i+2})$ preserves the total sum $\sum_e u_e = K$, keeps
+all digits in $\{1,\dots,9\}$, and shifts the value $F(u)$ by
+\[
+ \Delta = (d_0 + 10 d_1 + 100 d_2)\cdot 10^{3i}
+ = 9\cdot 10^{3i}\cdot(d_1 + 11 d_2).
+\]
+When $u_{3i} = u_{3i+1} = u_{3i+2} = 4$, any triple with $d_1, d_2, -d_1-d_2 \in
+\{-4,\dots,4\}$ is admissible; the resulting integer grid
+\[
+ X = \{\, d_1 + 11 d_2 : d_1, d_2 \in \{-4,\dots,4\},\ |d_1+d_2| \le 4 \,\}
+\]
+contains $61$ elements ($0$ together with $60$ nonzero integers, all bounded in
+absolute value by $44$). When we only assume $u_{3i+r} \in \{1,\dots,7\}$ for
+$r \in \{0,1,2\}$, restricting to $d_0,d_1,d_2 \in \{-1,0,1\}$ with
+$d_0 = -d_1 - d_2$ yields $d_1 + 11 d_2 \in \{0, \pm 1, \pm 10, \pm 11\}$; in
+particular, the \emph{minimal moves} $x \in \{\pm 1, \pm 10\}$ are always
+available on any triple of positions with offsets in $\{1,\dots,7\}$.
+
+\paragraph{Frozen poles.} An offset $u_e = 0$ (digit $1$) admits only $d_r \ge 0$,
+and an offset $u_e = 8$ (digit $9$) admits only $d_r \le 0$. If all three
+positions of a block sit at $u = 0$ (or all three sit at $u = 8$), the balance
+condition $d_0 + d_1 + d_2 = 0$ forces $d_0 = d_1 = d_2 = 0$. Requiring every
+position in each active exchange block to satisfy $u_e \in \{1,\dots,7\}$ avoids
+both frozen poles uniformly.
+
+\section{Stage sets and the Chowla step}
+\label{sec:stages}
+
+Let $m \ge 2$ be coprime to $10$, $g = \gcd(9,m)$, and $M = m/g$. Because
+$\gcd(m,10) = 1$, $M$ is coprime to $10$ (in particular, $M$ is odd). Moreover,
+$\gcd(9/g, M) = 1$: this is trivial for $g \in \{1,9\}$, and if $g = 3$ then
+$9 \nmid m$, so $3 \nmid (m/3) = M$.
+
+If $M = 1$ (which occurs when $m \in \{3,9\}$), the ring $\Z/M\Z$ is trivial:
+every integer is congruent to $0 \pmod M$, so $s = 0$ stages already cover
+$\Z/M\Z$ once the congruence modulo $g = m$ holds.
+
+Assume henceforth that $M \ge 2$ (and hence $M \ge 3$, since $\gcd(M,10)=1$).
+For a subset $U \subseteq X$ of grid values that are admissible on block $i$,
+we define the \emph{stage set} modulo $M$ by
+\[
+ B^*_i(U) = \{0\} \cup \{\, (9/g)\cdot 10^{3i}\cdot x \bmod M :
+ x \in U,\ \gcd(x,M) = 1 \,\} \subseteq \Z/M\Z .
+\]
+Because $\gcd(9/g,M) = \gcd(10^{3i},M) = 1$, multiplication by $(9/g)\cdot 10^{3i}$
+is a unit automorphism of $\Z/M\Z$: every nonzero element of $B^*_i(U)$ is a
+unit in $\Z/M\Z$, and $|B^*_i(U)| = |B^*_0(U)|$ is independent of $i$. Distinct
+blocks $i$ may produce the same subset of $\Z/M\Z$ (for instance when $10^3
+\equiv 1 \pmod M$, as for $M = 333$), which causes no difficulty because
+different blocks act on disjoint triples of decimal positions.
+
+\begin{theorem}[Chowla, 1935~\cite{chowla}]
+\label{thm:chowla}
+Let $k \ge 2$ be an integer, and let $A, B \subseteq \Z/k\Z$ be nonempty subsets.
+If $0 \in B$ and every nonzero element of $B$ is coprime to $k$, then
+$|A+B| \ge \min(k,\,|A|+|B|-1)$.
+\end{theorem}
+
+Applying Theorem~\ref{thm:chowla} iteratively across $s$ distinct position
+blocks $i_1, \dots, i_s$ (which requires $3s$ positions in total), starting
+from $\{0\} \subseteq \Z/M\Z$, yields
+\[
+ |B^*_{i_1}(U) + \cdots + B^*_{i_s}(U)| \ge \min(M,\, s\cdot w + 1),
+ \qquad w = |B^*_0(U)| - 1 .
+\]
+Hence $s = \lceil (M-1)/w \rceil$ stages cover all of $\Z/M\Z$ whenever $w \ge 1$.
+We apply this in two regimes (still assuming $M \ge 3$):
+
+\begin{itemize}
+\item \emph{Full smooth moves} (base offsets $u_e = 4$ on the active blocks,
+admitting all of $X$): when $g \in \{3,9\}$, the $\{2,5\}$-smooth elements of
+$X \setminus \{0\}$ are
+\[
+ U_{2,5} = \{\pm 1, \pm 2, \pm 4, \pm 8, \pm 10, \pm 20, \pm 32, \pm 40\},
+\]
+a set of $16$ integers automatically coprime to $M$ since $\gcd(M,10)=1$. When
+$g = 1$, we also have $3 \nmid M$, so we may adjoin the $\{2,3,5\}$-smooth
+elements $\pm\{3, 9, 12, 18, 24, 30\} \subseteq X$, obtaining a $28$-element
+set $U_{2,3,5} \subseteq X$ of integers coprime to $M$ (certificate C). All
+elements of $U_{2,5}$ and $U_{2,3,5}$ lie in $[-40,40]$, so their pairwise
+differences are nonzero and bounded in absolute value by $80$. Therefore,
+\emph{whenever $M > 80$}, reduction modulo $M$ is injective on $U_{2,5}$ and on
+$U_{2,3,5}$ (and none of these units can reduce to $0 \bmod M$), giving
+$w = |B^*_0(U_{2,5})| - 1 = 16$ for $g \in \{3,9\}$ and
+$w = |B^*_0(U_{2,3,5})| - 1 = 28$ for $g = 1$. Consequently, for $M > 80$, at
+most $s = \lceil (M-1)/w \rceil$ stages cover $\Z/M\Z$. (The Lean
+formalization uses the slightly more conservative uniform step count
+$s = \lfloor m/27 \rfloor + 1$ -- that is, $\lfloor M/27 \rfloor + 1$,
+$\lfloor M/9 \rfloor + 1$, or $\lfloor M/3 \rfloor + 1$ according as
+$g = 1$, $3$, or $9$ -- which satisfies the
+same $3s + 4 \le L$ inequality for all $M > 184$.)
+\item \emph{Minimal moves} (offsets $u_e \in \{1,\dots,7\}$ on the active
+blocks): take $U_{\min} = \{\pm 1, \pm 10\}$. Since $\gcd(M,10)=1$, all four
+elements of $U_{\min}$ are units modulo $M$. Because $M \ge 3$ is odd and
+$c = (9/g)\cdot 10^{3i}$ is a unit modulo $M$, the residues $+c$ and $-c$ are
+distinct modulo $M$ (otherwise $M \mid 2c$, impossible since $\gcd(2c,M)=1$).
+Thus $B^*_i(U_{\min}) \supseteq \{0, +c, -c\}$ satisfies $|B^*_i(U_{\min})| \ge 3$,
+so $w \ge 2$ for every $M \ge 3$, and $s = \lceil (M-1)/2 \rceil$ stages cover
+$\Z/M\Z$. (In fact, adding $\{0, +c, -c\}$ to any nonempty proper subset
+$A \subsetneq \Z/M\Z$ strictly increases $A$ by at least $2$ elements up to
+size $M$ by considering orbits of $+c$, giving Theorem~\ref{thm:chowla}
+directly in this special case.)
+\end{itemize}
+
+\section{Proof of Theorem~\ref{cor:murthy}}
+\label{sec:mainproof}
+
+Necessity was proved in \S\ref{sec:exc}, and every non-exceptional $n$ in the
+range $1 \le n \le 200$ is resolved by an explicit witness in certificate A.
+Assume now that $n > 200$ and $10 \nmid n$. Write $n = R\cdot m$ with
+$\gcd(m,10)=1$ and $R \in \{1, 2^a, 5^b\}$, and let $B$ and $d$ be given by
+Lemma~\ref{lem:lowblock}.
+
+\paragraph{Case $m = 1$.} Here $n = R > 200$. If $n = 2^a$, then $a \ge 8$ and
+$\sig(B) \le 2a < 2^a = n$. If $n = 5^b$, then $b \ge 4$ and
+$\sig(B) \le 5b < 5^b = n$. Thus $S := n - \sig(B) \ge 1$ in both cases. Write
+$S = 9q + r$ with $q \ge 0$ and $r \in \{1,\dots,9\}$, and let $H$ be the
+integer consisting of the digit $r$
+followed by $q$ digits equal to $9$. All digits of $H$ are nonzero,
+$\sig(H) = S$, and $N = B + 10^d \cdot H$ has all digits nonzero,
+$\operatorname{len}(N) \ge d + 1 \ge 5 \ge 2$, $\sig(N) = \sig(B) + S = n$,
+and $R \mid N$ since $R \mid B$ and $R \mid 10^d$.
+
+\paragraph{Case $m \ge 2$: target and coset compatibility.} Since $\gcd(m,10)=1$,
+$10^d$ is invertible modulo $m$; set the target residue
+$t := -B \cdot 10^{-d} \bmod m$ (so $t = 0$ when $R = 1$). We choose the fibre
+parameters
+\[
+ L = \Big\lfloor \frac{n - \sig(B)}{5} \Big\rfloor, \qquad
+ K = n - \sig(B) - L = 4L + r_0, \quad r_0 \in \{0,1,2,3,4\},
+\]
+provided $n - \sig(B) \ge 5$ (verified below). Because $B \equiv \sig(B) \pmod 9$
+and $10^d \equiv 1 \pmod 9$, we have $t \equiv -\sig(B) \pmod g$. On the fibre,
+every encoded value $F(u)$ satisfies
+$F(u) \equiv L + K = n - \sig(B) \equiv -\sig(B) \equiv t \pmod g$, because
+$g \mid m$ and $m \mid n$. Thus $(t - F(u^0))/g$ is an integer for any base
+offset vector $u^0$ of sum $K$.
+
+To place $s$ disjoint exchange blocks at base offset $u_e = 4$ and distribute
+the remainder $r_0 \le 4$ by raising $r_0$ separate positions from $4$ to $5$,
+it suffices that $L \ge 3s + 4$ (or $L \ge 3s + r_0$).
+
+\paragraph{Bounding $\sig(B)$ and $n - \sig(B)$.} If $R = 1$, then $\sig(B) = 0$
+and $n - \sig(B) = m = gM$. Suppose $R \ge 2$. If $R = 2^a$ ($a \ge 1$), then
+$2^a - 2a \ge 0$ for all $a \ge 1$; if $R = 5^b$ ($b \ge 1$), then
+$5^b - 5b \ge 0$ for all $b \ge 1$. Moreover, since $m \ge 3$ (as $\gcd(m,10)=1$
+and $m \ge 2$), we have
+\[
+ n - \sig(B) = R m - \sig(B) = m + (R-1)m - \sig(B) \ge gM + 3(R-1) - \sig(B).
+\]
+For $R = 2^a$ ($a \ge 1$), $3(2^a - 1) - 2a \ge 3\cdot 1 - 2 = 1 > 0$; for
+$R = 5^b$ ($b \ge 1$), $3(5^b - 1) - 5b \ge 3\cdot 4 - 5 = 7 > 0$. Therefore,
+in \emph{all} cases ($R = 1$ or $R \ge 2$), we have the clean lower bound
+\[
+ n - \sig(B) \ge m = gM .
+\]
+Similarly, because $n > 200$, one checks directly that $n - \sig(B) \ge 188$:
+for $R = 1$ we have $n - \sig(B) = n \ge 201$; for $R = 2^a$ with $n = 2^a m > 200$
+and $m \ge 3$, we have $2^a m - 2a \ge 202 - 14 = 188$ (and if $a \ge 8$,
+$2^a m - 2a \ge 3\cdot 256 - 16 = 752$); for $R = 5^b$ with $n = 5^b m > 200$
+and $m \ge 3$, the smallest value of $5^b m - 5b$ for $b \ge 2$ occurs at
+$b = 2, m = 9$
+($n = 225$), giving $225 - 10 = 215$ (the next case $b = 3, m = 3$ gives
+$375 - 15 = 360$, and $b \ge 4$ gives $\ge 1855$), while $b = 1$ has $m \ge 41$
+and $5m - 5 \ge 200$. Hence
+$n - \sig(B) \ge 188$ for every $n > 200$ with $m \ge 2$, which forces
+\[
+ L = \Big\lfloor \frac{n - \sig(B)}{5} \Big\rfloor \ge \Big\lfloor \frac{188}{5} \Big\rfloor = 37 .
+\]
+
+\paragraph{Verifying the stage budget $3s + 4 \le L$.} We split on the size of $M$.
+
+\begin{itemize}
+\item \emph{Analytic regime $M > 184$.} Since $M > 184 > 80$, the smooth-unit
+injectivity holds (\S\ref{sec:stages}), giving $w = 28$ when $g = 1$ and
+$w = 16$ when $g \in \{3,9\}$, with $s = \lceil (M-1)/w \rceil$. Using
+$L = \lfloor (n - \sig(B))/5 \rfloor \ge \lfloor gM/5 \rfloor \ge (gM - 4)/5$:
+\begin{itemize}
+\item For $g = 1$ ($w = 28$, $M \ge 185$): we need
+$3\lceil (M-1)/28 \rceil + 4 \le \lfloor M/5 \rfloor$. Since
+$\lceil (M-1)/28 \rceil \le (M + 26)/28$, we have
+\[
+ 3\Big\lceil \frac{M-1}{28} \Big\rceil + 4 \le \frac{3M + 190}{28} \le \frac{M - 4}{5}
+\]
+for all $M \ge 184$ (as $15M + 950 \le 28M - 112 \iff 13M \ge 1062 \iff M \ge 82$).
+\item For $g = 3$ ($w = 16$, $M \ge 185$): we have
+\[
+ 3\Big\lceil \frac{M-1}{16} \Big\rceil + 4 \le \frac{3M + 106}{16} \le \frac{3M - 4}{5}
+\]
+for all $M \ge 185$ (as $15M + 530 \le 48M - 64 \iff 33M \ge 594 \iff M \ge 18$).
+\item For $g = 9$ ($w = 16$, $M \ge 185$): we have
+$3\lceil (M-1)/16 \rceil + 4 \le (3M - 4)/5 < (9M - 4)/5 \le L$.
+\end{itemize}
+Thus $3s + 4 \le L$ holds for all $M > 184$.
+
+\item \emph{Certified finite regime $M \le 184$.} Here $m = gM \le 9 \cdot 184 = 1656$.
+If $M = 1$ ($m \in \{3,9\}$), $s = 0$ stages suffice and $4 \le 37 \le L$. For
+$2 \le M \le 184$ with $m \notin \{11,19,23\}$, certificate B verifies directly
+by bit-parallel sumset evaluation that the smooth moves $U_{2,3,5}$ ($28$ values,
+used when $g = 1$) or $U_{2,5}$ ($16$ values, used when $g \in \{3,9\}$) cover
+$\Z/m\Z$ (within
+the $\bmod\, g$ coset) in $k \le \lfloor m/27 \rfloor + 1$ stages. Using
+$n - \sig(B) \ge m$ and $L \ge 37$: if $m \le 296$, then $k \le 11$ and
+$3k + 4 \le 37 \le L$; if $m \ge 297$, then
+\[
+ 3k + 4 \le 3\Big(\frac{m}{27} + 1\Big) + 4 = \frac{m}{9} + 7 \le \frac{m - 4}{5} \le L
+\]
+where the last step uses the stronger available bound $L \ge \lfloor m/5 \rfloor$
+since $5m + 315 \le 9m - 36 \iff 4m \ge 351 \iff m \ge 88$. Finally, for the
+three small moduli $m \in \{11,19,23\}$, certificate D1 verifies that $k = 2$
+stages cover $\Z/m\Z$ (requiring $3k + 4 = 10 \le 37 \le L$). (In the Lean
+formalization, the standalone lemma for $m \ge 2$ is stated more generally for
+all $L \ge \lfloor m/5 \rfloor$ rather than only $L \ge 37$; for
+$m \in \{11,19,23\}$ at the small lengths $L \in \{7,8,9\}$, where $3k+4=10 > L$,
+certificate D2 supplies an explicit table of $795$ witnesses.)
+\end{itemize}
+
+\paragraph{Assembly.} Let $u^0$ be the base offset vector with $u^0_e = 4$ on
+the first $3s$ positions (forming $s$ blocks), $u^0_e = 5$ on $r_0$ of the
+remaining positions, and $u^0_e = 4$ elsewhere, and set $H_0 = F(u^0)$. By
+stage coverage, there exist $s$ admissible grid values $x_0,\dots,x_{s-1} \in X$
+such that
+\[
+ \sum_{i=0}^{s-1} (9/g)\,10^{3i}\,x_i \equiv \frac{t - H_0}{g} \pmod M .
+\]
+Lifting each $x_i = d_{i,1} + 11 d_{i,2}$ to a balanced triple on block $i$
+produces an offset vector $u \in \{0,\dots,8\}^L$ with $\sum_e u_e = 4L + r_0 = K$
+and $H := F(u) = H_0 + g \sum_{i=0}^{s-1} (9/g)\,10^{3i}\,x_i \equiv t \pmod m$.
+Then $N = B + 10^d \cdot H$ has all digits nonzero, $\operatorname{len}(N) = d + L \ge 37 \ge 2$,
+and $\sig(N) = \sig(B) + L + K = n$. Moreover, $N \equiv 0 \pmod R$ (since
+$R \mid B$ and $R \mid 10^d$) and $N \equiv B + 10^d t \equiv 0 \pmod m$; since
+$\gcd(R,m)=1$, we conclude $n = Rm \mid N$. \qed
+
+\section{Proof of Theorem~\ref{thm:band}}
+\label{sec:band}
+
+Let $m \ge 2$ be coprime to $10$, $g = \gcd(9,m)$, $M = m/g$, and
+$s = \lceil (M-1)/2 \rceil$. Fix a positive integer $L \ge 3s$, an
+integer $\sig \in [L+3s,\,9L-3s]$, and a residue
+$r \equiv \sig \pmod g$. Set $K = \sig - L$, so $K \in [3s,\,8L-3s]$.
+
+If $M = 1$ (that is, $m \in \{3,9\}$ and $g = m$), then $s = 0$ and
+$K \in [0,\,8L]$. Any offset vector $u \in \{0,\dots,8\}^L$ with $\sum_e u_e = K$
+(obtained greedily by filling offsets up to $8$) gives an $L$-digit nonzero-digit
+integer $N = F(u)$ with $\sig(N) = L + K = \sig$ and
+$N \equiv \sig \equiv r \pmod m$.
+
+Assume now that $M \ge 3$, so $s = \lceil (M-1)/2 \rceil \ge 1$ and $L \ge 3s \ge 3$.
+
+\paragraph{(i) Offset distribution.} Initialize $u^0_e = 1$ on the $3s$ active
+positions $\{0,\dots,3s-1\}$ (which uses $3s$ units of sum) and $u^0_e = 0$ on
+the remaining $L - 3s$ positions $\{3s,\dots,L-1\}$. We must distribute the
+remaining $K - 3s \ge 0$ units across the $L$ positions while keeping
+$u^0_e \in \{1,\dots,7\}$ for $e \in \{0,\dots,3s-1\}$ and
+$u^0_e \in \{0,\dots,8\}$ for $e \in \{3s,\dots,L-1\}$. Each of the $3s$ active
+positions can absorb up to $6$ additional units (from $1$ up to $7$), and each
+of the $L - 3s$ free positions can absorb up to $8$ additional units (from $0$
+up to $8$). The total remaining capacity is
+\[
+ 6(3s) + 8(L - 3s) = 8L - 6s .
+\]
+Because $K \le 8L - 3s$, we have $K - 3s \le 8L - 6s$, so a greedy allocation
+produces a base vector $u^0$ with $\sum_{e=0}^{L-1} u^0_e = K$ and
+$u^0_e \in \{1,\dots,7\}$ for all $e \in \{0,\dots,3s-1\}$.
+
+\paragraph{(ii) Residue coverage.} Let $H_0 = F(u^0)$. Since $H_0 \equiv L + K = \sig \equiv r \pmod g$,
+the integer $(r - H_0)/g$ is well-defined modulo $M$. Because $u^0_e \in \{1,\dots,7\}$
+on every position of the $s$ disjoint blocks $\{3i,3i+1,3i+2\}$ ($0 \le i < s$),
+the minimal moves $U_{\min} = \{\pm 1, \pm 10\}$ are admissible on each block.
+As shown in \S\ref{sec:stages}, for $M \ge 3$ each stage set $B^*_i(U_{\min})$
+has cardinality at least $3$ (so $w \ge 2$) and every nonzero element is a unit
+modulo $M$. By Theorem~\ref{thm:chowla}, the $s$-fold sumset
+$B^*_0(U_{\min}) + \cdots + B^*_{s-1}(U_{\min})$ has size at least
+$\min(M,\, 2s + 1) = M$, covering $\Z/M\Z$. Selecting moves $x_i \in U_{\min} \cup \{0\}$
+for $0 \le i < s$ with $\sum_{i=0}^{s-1} (9/g)\,10^{3i}\,x_i \equiv (r - H_0)/g \pmod M$
+and applying the corresponding balanced triples in $\{-1,0,1\}^3$ yields an
+offset vector $u \in \{0,\dots,8\}^L$ of sum $K$ such that $N = F(u)$ has $L$
+nonzero digits, $\sig(N) = \sig$, and $N \equiv r \pmod m$. \qed
+
+\begin{remark}
+One cannot uniformly replace $s = \lceil (M-1)/2 \rceil$ in the minimal-move
+argument by $\lceil (M-1)/4 \rceil$: when $M \in \{9,11\}$, the congruence
+$10 \equiv \pm 1 \pmod M$ collapses $U_{\min} \bmod M$ to $\{\pm 1\}$, leaving
+$|B^*_i(U_{\min})| = 3$ ($w = 2$) so that $4$ stages (for $M = 9$) and $5$
+stages (for $M = 11$) are genuinely required by minimal moves. An auxiliary
+machine check over all $m \le 200$ coprime to $10$ at minimal non-vacuous
+lengths confirms Theorem~\ref{thm:band} on every residue and digit sum in the
+stated band; this computation is not part of the certified development.
+\end{remark}
+
+\section{Method window and edge behavior}
+\label{sec:edges}
+
+We clarify the role of the endpoints of the interval $[L+3s,\,9L-3s]$ in
+Theorem~\ref{thm:band} (where $L \ge 1$ is assumed). To operate $s$ independent minimal-move exchange blocks
+simultaneously without risking frozen poles, every one of the $3s$ active
+positions must lie in $\{1,\dots,7\}$. Having at least $3s$ positions with
+$u_e \ge 1$ forces $K = \sum_e u_e \ge 3s$, i.e.\ $\sig \ge L + 3s$;
+symmetrically, having at least $3s$ positions with $u_e \le 7$ forces
+$8L - K = \sum_e (8 - u_e) \ge 3s$, i.e.\ $\sig \le 9L - 3s$. In this precise
+sense, $[L+3s,\,9L-3s]$ is the exact feasibility window of our $s$-stage
+non-frozen block construction.
+
+We do \emph{not} claim that residues outside $[L+3s,\,9L-3s]$ are
+mathematically unrealizable: individual moduli $m$ and sums $\sig$ near the
+edges can admit witnesses via denser moves from $X$ or asymmetric position
+choices. Only at the extreme endpoints $\sig = L$ (the repunit $11\cdots 1$)
+and $\sig = 9L$ (the number $99\cdots 9$) does the fibre collapse to a single
+integer with no residue freedom at all. Inside $[L+3s,\,9L-3s]$, disjointness
+of the $s$ position triples prevents any interference between stages regardless
+of the multiplicative order of $10$ modulo $M$.
+
+\section{Formal verification}
+\label{sec:lean}
+
+It is important to distinguish what is kernel-verified in Lean~4 from what
+belongs to the mathematical presentation of this paper:
+\begin{itemize}
+\item \emph{Kernel-verified in Lean~4 (v4.35.0, mathlib v4.35.0)~\cite{lean}:}
+the complete characterization of Murthy's conjecture (Theorem~\ref{cor:murthy}),
+all five necessity lemmas, the fixed-sum smooth-exchange machinery feeding the
+existence proof for $n > 200$, all six finite certificates (A, B, C, D1, D2,
+and E), and the OEIS sequence-value specification (\texttt{IsLeast} for
+non-exceptional indices, vanishing on exceptional indices, and exact values on
+displayed OEIS anchors).
+\item \emph{Proved in this paper only:} the general two-parameter band theorem
+for arbitrary $\sig \in [L+3s,\,9L-3s]$ using minimal moves
+(Theorem~\ref{thm:band}, \S\ref{sec:band}) and the quantitative summary
+(Corollary~\ref{cor:quant}).
+\end{itemize}
+
+In the main file \texttt{A077754.lean}, the headline theorem is formalized over
+$n \in \N$ as the equivalence between the existence of $N \in \N$ satisfying
+$n \mid N$, $\mathrm{allNonzero}(N)$, $\sig_{10}(N) = n$, and
+$(\mathrm{Nat.digits}\ 10\ N).\mathrm{length} \ge 2$, and the condition
+$n \notin \{1,2,5,11\} \cup \{m \in \N : 10 \mid m\}$. Table~\ref{tab:lean}
+records the correspondence between results in the text and declarations in the
+Lean artifact.
+
+\begin{table}[ht]
+\centering
+\small
+{\footnotesize\setlength{\tabcolsep}{4pt}
+\begin{tabular}{llp{6.2cm}}
+\hline
+Paper item & Lean declaration & Role in formalization \\
+\hline
+Theorem~\ref{cor:murthy} & \texttt{A077754} & Full iff characterization of Murthy's conjecture \\
+\S\ref{sec:exc} ($n=1,2,5,10k,11$) & \texttt{exc\_1}, \texttt{exc\_2}, \texttt{exc\_5}, \texttt{exc\_10}, \texttt{exc\_11} & Necessity of the exceptional set \\
+\S\ref{sec:mainproof} ($n \le 200$, Cert.\ A) & \texttt{existence\_small} & Exhaustive witness table for $n \le 200$ \\
+\S\ref{sec:mainproof} (inductive / low block) & \texttt{existence\_step} & Reduction $n = R m$ via low-order block \\
+\S\ref{sec:mainproof} (coprime factor $m$) & \texttt{existence\_Rm} & High-fibre existence modulo $m$ ($\gcd(m,10)=1$) \\
+\S\ref{sec:machinery} (exchange grid $X$) & \texttt{Xgrid\_card} & Grid structure and cardinality check \\
+\S\ref{sec:stages} (Cert.\ C, smooth units) & \texttt{Xsmooth25\_sub}, \texttt{Xsmooth235\_sub} & Inclusion and counts of smooth grid units \\
+\S\ref{sec:mainproof} (Cert.\ B, $M \le 184$) & \texttt{stage\_cover\_small\_aux'} & Bit-parallel stage coverage for $m \le 1656$ \\
+\S\ref{sec:mainproof} (Cert.\ D2, corners) & \texttt{corner\_witness} & $795$ explicit witnesses for $m \in \{11,19,23\}$, $L \in \{7,8,9\}$ \\
+\S\ref{sec:lean} (OEIS sequence $a(n)$) & \texttt{a077754\_val}, \texttt{a077754\_val\_spec} & Definition of $a(n)$ and \texttt{IsLeast} specification \\
+\S\ref{sec:lean} (Cert.\ E, zero anchors) & \texttt{a077754\_val\_zero\_*} & Certified zeros at displayed exceptional indices \\
+\hline
+\end{tabular}}
+\caption{Correspondence between mathematical statements and Lean~4 declarations.}
+\label{tab:lean}
+\end{table}
+
+In the companion module \texttt{A077754Val.lean}, the OEIS sequence itself is
+defined via \texttt{a077754\_val}: \texttt{a077754\_val\_spec} certifies that
+for every non-exceptional $n$, \texttt{a077754\_val}\,$n$ is the least element
+(\texttt{IsLeast}) of the set of admissible multiples, while vanishing exactly
+on the exceptional set. The displayed OEIS terms are kernel-certified value
+anchors: $a(3)=12$, $a(4)=112$, $a(6)=24$, $a(7)=133$, $a(8)=152$, $a(9)=18$,
+and $a(12)=48$ (each verified together with minimality by scanning all positive
+multiples $n\cdot j < a(n)$), alongside $a(n)=0$ at
+$n \in \{1,2,5,10,11,20,30,40\}$.
+
+Running \texttt{lake build} compiles $9052$ jobs with $0$ errors and no
+\texttt{sorry} across four Lean modules (approximately $2600$ lines in
+\texttt{A077754.lean}, $267$ lines in \texttt{A077754Cert.lean}, $805$ lines in
+\texttt{CornerTable.lean}, and $319$ lines in \texttt{A077754Val.lean}). Every
+finite certificate is evaluated inside the Lean kernel via \texttt{decide},
+avoiding \texttt{native\_decide} so that the axiom report
+for \texttt{A077754} lists only
+\texttt{propext}, \texttt{Classical.choice}, and \texttt{Quot.sound}. For the
+sumset coverage certificate B, the kernel evaluates a bit-parallel residue
+bitmap in the dedicated module \texttt{A077754Cert.lean}, and a bridge lemma in
+\texttt{A077754.lean} transports the bitmap verdict to \texttt{Finset}
+coverage.
+
+\paragraph{Artifact.} This paper, the Lean formalization
+(modules \texttt{A077754}, \texttt{A077754Cert},
+\texttt{CornerTable}, \texttt{A077754Val}), the independent
+verifier script, and the pinned build files are archived
+together at \url{https://doi.org/10.5281/zenodo.23879087}.
+
+\section{Remarks}
+
+\begin{itemize}
+\item \emph{Alternative asymptotic tools.} Let $Z_j = (10^j - 1)/9$ denote the
+repunit of $j$ ones. A two-block expression of the form
+$Z_a \cdot 10^k + (10^k - Z_r)$ (with $1 \le r \le k$, which consists of $a$
+ones, followed by $k-r$ nines, $r-1$ eights, and a final nine, hence all digits
+nonzero and controllable digit sum) can be combined with Konyagin's results on
+arithmetic properties of integers with missing digits~\cite{konyagin} to treat
+sufficiently large $n$. The present proof replaces heavy exponential-sum inputs
+by Chowla's elementary theorem together with explicit finite certificates that
+close the threshold down to $n = 1$.
+\item \emph{Other bases.} In a general base $b \ge 4$, the same fixed-length
+fibre and balanced triple exchange mechanism applies directly (with the prime
+factors of $b$ playing the role of $\{2,5\}$, and digits in $\{1,\dots,b-1\}$
+leaving $b - 3 \ge 1$ non-frozen interior values $\{2,\dots,b-2\}$ (at least
+two for $b \ge 5$)). Base $b = 2$
+degenerates completely since $1$ is the unique nonzero digit, and base $b = 3$
+has no non-frozen interior digit either (its nonzero digits $\{1,2\}$ are both
+frozen poles), so base $3$ requires a redesigned multi-position exchange gadget
+rather than single position-triple offsets.
+\item \emph{Role of the dense exchange grid.} Balanced digit exchanges and
+Chowla's 1935 sumset inequality are classical tools, but using minimal moves
+alone ($w = 2$) would require $L \approx 3M/2$ digits, exceeding the available
+linear digit budget $L \approx n/5$ when $g = 1$ and $n = M$. Enlarging the
+single-block grid $X$ to $60$ nonzero values yields $28$ smooth units when
+$g = 1$ and $16$ when $g \in \{3,9\}$, reducing the stage slope to $3/28 < 1/5$
+(respectively $3/16 < 3/5$) and pushing the analytic threshold down to
+$M \le 184$, well within reach of kernel-checked bitmap evaluation.
+\end{itemize}
+
+\appendix
+\section{Reproducible machine certificates}
+
+Six finite certificates are used in the formalization; all six are
+kernel-checked by \texttt{decide} inside the Lean artifact (\S\ref{sec:lean}),
+and certificates A, B, and C are independently re-derived in seconds by the
+standalone script \texttt{A077754-ANNEXE.py} (Python standard library, around
+$90$ lines):
+
+\begin{itemize}
+\item \emph{Certificate A (small $n$ witnesses):} an explicit admissible
+multiple $N$ for each of the $176$ non-exceptional positive integers
+$n \le 200$, found by breadth-first search over states
+$(\text{residue} \bmod n,\, \text{digit sum},\, \text{length})$.
+\item \emph{Certificate B (small-$M$ stage coverage):} in
+\texttt{A077754Cert.lean}, bit-parallel sumset evaluation verifies that for
+every $m \le 1656$ coprime to $10$ with $2 \le M \le 184$ and
+$m \notin \{11,19,23\}$, the smooth move set $U_{2,3,5}$ ($28$ values, used when
+$g = 1$) or $U_{2,5}$ ($16$ values, used when $g \in \{3,9\}$) covers all
+residues in the
+appropriate $\bmod\, g$ coset of $\Z/m\Z$ within $k \le \lfloor m/27 \rfloor + 1$
+stages. (The Python script also runs a uniform check showing that every
+$M \le 600$ coprime to $10$ is covered in at most $6$ stages, with worst case
+$M = 333$ where $10^3 \equiv 1 \pmod{333}$.)
+\item \emph{Certificate C (smooth grid units):} verification on the $61$-element
+grid $X$ that $X$ contains the $16$ $\{2,5\}$-smooth nonzero values
+$\pm\{1,2,4,8,10,20,32,40\}$ (used for $g \in \{3,9\}$) together with the $12$
+additional $\{2,3,5\}$-smooth values $\pm\{3,9,12,18,24,30\}$, giving $28$
+smooth units for $g = 1$.
+\item \emph{Certificate D1 (two-stage coverage for $\{11,19,23\}$):} a finite
+stage-coverage check (not a witness table) confirming that $k = 2$ stages of
+smooth moves from $U_{2,3,5}$ (which applies since $g = \gcd(9,m) = 1$ for all
+three moduli) cover $\Z/m\Z$ for $m \in \{11,19,23\}$ (in fact $k = 1$ already
+covers $m = 19$ and $m = 23$).
+\item \emph{Certificate D2 (corner witness table):} in \texttt{CornerTable.lean}
+and \texttt{A077754.lean}, an explicit table of $795$ digit witnesses covering
+all residues modulo $m$ for $m \in \{11,19,23\}$, $L \in \{7,8,9\}$, and
+$r_0 \in \{0,1,2,3,4\}$. As noted in \S\ref{sec:mainproof}, $n > 200$ forces
+$L \ge 37$ in the main theorem, so D2 is used solely to close the standalone
+helper lemma at its stated lower bound $L \ge \lfloor m/5 \rfloor$.
+\item \emph{Certificate E (OEIS value anchors):} in \texttt{A077754Val.lean},
+kernel verification of the exact sequence values $a(3)=12$, $a(4)=112$,
+$a(6)=24$, $a(7)=133$, $a(8)=152$, $a(9)=18$, and $a(12)=48$ (each paired with
+a kernel scan over $n \cdot j < a(n)$ proving minimality, distinguishing e.g.\
+the minimal value $a(7) = 133$ from non-minimal existential witnesses), together
+with $a(n) = 0$ for $n \in \{1,2,5,10,11,20,30,40\}$.
+\end{itemize}
+
+\section*{Use of AI tools}
+Generative AI tools assisted in blind OEIS transcription,
+adversarial auditing, proof sketching, and text review,
+within a verification methodology designed and supervised
+by the author. The characterization of OEIS A077754
+(Theorem~\ref{cor:murthy}) and its sequence-value
+specification are verified from standard axioms only in
+the Lean~4 kernel, with the Lean source and the
+independent Python certificate script archived in the
+companion record. The author selected the problems and
+proof strategies, arbitrated all discrepancies, verified
+OEIS fidelity, and takes full responsibility for this
+work.
+
+\section*{Funding}
+No funding was received for this work.
+
+\section*{Competing interests}
+The author declares none.
+
+\begin{thebibliography}{9}
+\bibitem{oeis} A.~Murthy, OEIS A077754 (conjecture,
+ Nov.~2002), in \emph{The On-Line Encyclopedia of Integer
+ Sequences}, N.~J.~A.~Sloane, ed., \url{https://oeis.org/A077754}.
+\bibitem{a002998} OEIS A002998, in \emph{The On-Line
+ Encyclopedia of Integer Sequences}, N.~J.~A.~Sloane,
+ ed., \url{https://oeis.org/A002998}.
+\bibitem{chowla} I.~Chowla, \emph{A theorem on the addition
+ of residue classes: Application to the number $\Gamma(k)$ in
+ Waring's problem}, Proc.\ Indian Acad.\ Sci.\ Sect.~A
+ \textbf{2} (1935), 242--243.
+\bibitem{konyagin} S.~Konyagin, \emph{Arithmetic properties
+ of integers with missing digits}, Period.\ Math.\ Hungar.\
+ \textbf{42} (2001), 145--162.
+\bibitem{fils} H.~Fredricksen, E.~J.~Ionascu, F.~Luca, and
+ P.~St\u{a}nic\u{a}, \emph{Minimal Niven numbers}, Acta Arith.\
+ \textbf{132} (2008), 135--159; arXiv:0803.0477.
+\bibitem{aassila} M.~Aassila, \emph{1000 challenges
+ math\'ematiques, Alg\`ebre}, Ellipses, Paris, 2016, p.~110.
+\bibitem{lean} F.~Gaudin, Formalization of OEIS A077754 in
+ Lean~4 + mathlib (v4.35.0), archived at
+ \url{https://doi.org/10.5281/zenodo.23879087}.
+\end{thebibliography}
+
+\end{document}

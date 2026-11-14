@@ -4,11 +4,12 @@
   "upload_type": "software",
   "creators": [
     {
-      "name": "Gaudin, Frédéric"
+      "name": "Gaudin, Frédéric",
+      "affiliation": "University of Caen Normandy"
     }
   ],
   "license": {
-    "id": "Apache-2.0"
+    "id": "apache-2.0"
   },
   "keywords": [
     "OEIS",
@@ -23,7 +24,7 @@
     "smallest multiple",
     "IsLeast"
   ],
-  "version": "v12",
+  "version": "v13",
   "related_identifiers": [
     {
       "identifier": "https://oeis.org/A077754",
