@@ -1,6 +1,6 @@
 name = "a077754"
 version = "0.1.0"
-defaultTargets = ["A077754", "A077754Val", "Spec_A077754", "Check_Spec_A077754", "Check_AntiVac_A077754", "Check_d2plus_A077754"]
+defaultTargets = ["A077754", "A077754Cert", "CornerTable", "A077754Val", "Spec_A077754", "Check_Spec_A077754", "Check_AntiVac_A077754", "Check_d2plus_A077754"]
 
 [[require]]
 name = "mathlib"

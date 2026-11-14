@@ -96,6 +96,6 @@ lake build # installs toolchain via elan, fetches mathlib cache
 
 F. Gaudin, *Prescribed digit sums in residue classes and a
 conjecture of Murthy (OEIS A077754)*. Paper + artifact archived
-at https://doi.org/10.5281/zenodo.23879087 (all versions; the
-kernel-pure artifact described here is v12:
-https://doi.org/10.5281/zenodo.23954824)
+at https://doi.org/10.5281/zenodo.23879087 (concept DOI, all
+versions - the kernel-pure 4-module artifact described here is
+deposited as version v12; cite the concept DOI).

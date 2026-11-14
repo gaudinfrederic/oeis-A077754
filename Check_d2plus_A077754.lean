@@ -4,20 +4,17 @@ set_option autoImplicit false
 set_option relaxedAutoImplicit false
 
 /-!
-# Check_d2plus_A077754 - harnais d'audit du correctif D2+
+# Check_d2plus_A077754 - harnais de verification du module
+# A077754Val
 
-Historique : ce fichier contenait la premiere implementation du
-correctif « clause smallest » (verifiee au kernel, run
-43009035589, axiomes trio). Le contenu a ete PROMU dans le
-module livre `A077754` -> `A077754Val` (`lean/A077754Val.lean`,
-namespace `A077754Val`, termes de preuve identiques - seuls les
+Historique : ce fichier contenait la premiere implementation de
+la clause « smallest » (verifiee au kernel, axiomes trio). Le
+contenu a ete PROMU dans le module livre `A077754Val`
+(namespace `A077754Val`, termes de preuve identiques - seuls les
 noms qualifies changent de `CheckD2plusA077754.*` a
 `A077754Val.*`). Ce fichier reste le harnais de verification :
 `lake env lean Check_d2plus_A077754.lean` re-imprime les axiomes
 des theoremes livres.
-
-Voir `STATUS/D2PLUS/A077754.md` (audit FAIL initial) et
-`STATUS/D2PLUS/A077754-FIX.md` (rapport du correctif).
 -/
 
 open A077754Val

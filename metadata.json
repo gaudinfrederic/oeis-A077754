@@ -1,10 +1,10 @@
 {
-  "title": "A077754 - Murthy's conjecture: prescribed digit sums in residue classes (Lean 4)",
-  "description": "Machine-checked proof of theorem A077754 (conjecture of Amarnath Murthy, OEIS, 2002): for every n, there exists a multiple N of n with all-nonzero digits, digit sum n and at least 2 digits, iff n is not in {1,2,5,11} and not divisible by 10. Unconditional, proved for all n. NEW IN v8: the OEIS sequence value itself is formalized in module A077754Val - a077754_val n is certified IsLeast of the admissible multiples for every non-exceptional n (the 'smallest multiple ... or 0 if no such multiple exists' clause of the entry, previously not formalized), a(n)=0 iff n in {1,2,5,11} or 10|n, and the displayed terms are kernel-certified value anchors with minimality (a(3)=12, a(4)=112, a(6)=24, a(7)=133, a(8)=152, a(9)=18, a(12)=48; zeros at n=1,2,5,10,11,20,30,40). Trust base: the Lean kernel alone - #print axioms = [propext, Classical.choice, Quot.sound] on theorem A077754 and on all A077754Val theorems; every finite certificate is kernel-checked by decide (bitmap certificates in A077754Cert.lean); no native_decide, no sorryAx.",
+  "title": "Prescribed digit sums in residue classes and a conjecture of Murthy (OEIS A077754)",
+  "description": "Machine-checked resolution of Amarnath Murthy's conjecture (OEIS A077754, 2002): a positive integer n admits a multiple with at least two digits, all nonzero, and digit sum n, iff n is not in {1,2,5,11} and not a multiple of 10. Both implications are kernel-verified in Lean 4 (v4.35.0, mathlib) with axiom base {propext, Classical.choice, Quot.sound}; the paper also proves a general equidistribution band theorem on fixed-length digit fibres (paper-side result), and formalizes the OEIS sequence values on displayed anchors.",
   "upload_type": "software",
   "creators": [
     {
-      "name": "Gaudin, Frederic"
+      "name": "Gaudin, Frédéric"
     }
   ],
   "license": {
@@ -23,11 +23,11 @@
     "smallest multiple",
     "IsLeast"
   ],
-  "version": "v8",
+  "version": "v12",
   "related_identifiers": [
     {
       "identifier": "https://oeis.org/A077754",
-      "relation": "references",
+      "relation": "documents",
       "resource_type": "other",
       "scheme": "url"
     },
@@ -35,18 +35,6 @@
       "identifier": "https://github.com/gaudinfrederic/oeis-A077754",
       "relation": "isSupplementedBy",
       "resource_type": "software",
-      "scheme": "url"
-    },
-    {
-      "identifier": "https://oeis.org/A002998",
-      "relation": "references",
-      "resource_type": "other",
-      "scheme": "url"
-    },
-    {
-      "identifier": "https://oeis.org/A069035",
-      "relation": "references",
-      "resource_type": "other",
       "scheme": "url"
     }
   ],

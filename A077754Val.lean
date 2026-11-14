@@ -7,9 +7,8 @@ set_option relaxedAutoImplicit false
 # A077754Val - la fonction `a(n)` de la fiche OEIS et la clause
 # « smallest »
 
-Module livre (promotion du correctif D2+, audit
-`STATUS/D2PLUS/A077754.md` : VERDICT FAIL corrige, rapport
-`STATUS/D2PLUS/A077754-FIX.md`). Le theoreme `A077754` (module
+Module livre : la clause « smallest » de la fiche, ajoutee
+apres audit de completude du perimetre. Le theoreme `A077754` (module
 eponyme) prouve l'equivalence d'existence - zero-set
 `{1,2,5,11} ∪ 10ℕ`, conjecture %C de Murthy. Ce module ajoute
 la formalisation de l'objet-suite du %N « Smallest multiple of
